@@ -20,12 +20,16 @@ ARCHS ?=
 
 .PHONY: app run debug install icon dmg notarize clean
 
-# Build the binary and wrap it into a signed app bundle.
+# Build the binary and wrap it into a signed app bundle. A release build
+# loses its debug entries, which name the folder it was built in.
 app:
 	swift build -c $(CONFIG) $(ARCHS)
 	rm -rf $(APP)
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp "$$(swift build -c $(CONFIG) $(ARCHS) --show-bin-path)/$(APP_NAME)" $(APP)/Contents/MacOS/
+ifeq ($(CONFIG),release)
+	strip -S $(APP)/Contents/MacOS/$(APP_NAME)
+endif
 	cp Resources/Info.plist $(APP)/Contents/
 	cp Resources/AppIcon.icns $(APP)/Contents/Resources/
 	codesign --force $(SIGN_FLAGS) --sign "$(SIGNING_IDENTITY)" $(APP)
